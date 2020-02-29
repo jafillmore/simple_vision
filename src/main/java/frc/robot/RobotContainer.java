@@ -7,35 +7,9 @@
 
 package frc.robot;
 
-import org.opencv.core.Rect;
-import org.opencv.imgproc.Imgproc;
-
-import edu.wpi.cscore.CvSource;
-import edu.wpi.cscore.UsbCamera;
-import edu.wpi.cscore.VideoMode;
-import edu.wpi.first.cameraserver.CameraServer;
-import edu.wpi.first.vision.VisionThread;
 import edu.wpi.first.wpilibj.GenericHID;
-
-//**************************************************************
-
-//**************************************************************
-// Human Interface Devices (HID) Imports
-
-import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.XboxController;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
-//
-import edu.wpi.first.wpilibj2.command.PerpetualCommand;
-import edu.wpi.first.wpilibj2.command.RunCommand;
-import edu.wpi.first.wpilibj2.command.button.JoystickButton;
-
-// *************************************************************
-
-// *************************************************************
-import frc.robot.Constants.DStationConstants;
-import frc.robot.Constants.VisConstants;
 // ***********************************************************
 // Commands and Subsystems
 import frc.robot.commands.ExampleCommand;
@@ -53,12 +27,7 @@ public class RobotContainer {
 
   private final ExampleCommand m_autoCommand = new ExampleCommand(m_exampleSubsystem);
   
-  UsbCamera targetCam = CameraServer.getInstance().startAutomaticCapture(0);
-
-    Object imgLock = new Object();
-    public int count = 0;
-    public int pipeCount = 0;
-    public double centerX = 0;
+ 
 
   /**
    * The container for the robot.  Contains subsystems, OI devices, and commands.
@@ -69,38 +38,9 @@ public class RobotContainer {
     
     
       
-    targetCam.setVideoMode(VideoMode.PixelFormat.kMJPEG,
-                          VisConstants.targetCameraFrameWidth,
-                          VisConstants.targetCameraFrameHeight,
-                          VisConstants.targetCameraFPS);
-  
-    CvSource outputStream = CameraServer.getInstance().putVideo("Processed in Main", VisConstants.targetCameraFrameWidth, VisConstants.targetCameraFrameHeight);
     
-    new VisionThread(targetCam, new StripPipeline(), stripPipeline -> {
-                            
-      SmartDashboard.putNumber("Number of Contours Found", stripPipeline.findContoursOutput().size());
-                                     
-      if (stripPipeline.filterContoursOutput().isEmpty())
-        {SmartDashboard.putString("Filterd Contour Status:", "No Contours Found");
-      };
-
-      
-      if (!stripPipeline.filterContoursOutput().isEmpty()) {
-        
-        SmartDashboard.putNumber("Number of Contours Found", stripPipeline.filterContoursOutput().size());
-
-          Rect r = Imgproc.boundingRect(stripPipeline.filterContoursOutput().get(0));
-          synchronized (imgLock) {
-              centerX = r.x + (r.width / 2);
-
-              SmartDashboard.putNumber("Center X from Subsys VisionThread", centerX);
-
-            
-          }
-          outputStream.putFrame(stripPipeline.cvAbsdiffOutput);
-      }
-      
-    });
+    
+    
                         
     
     configureButtonBindings();

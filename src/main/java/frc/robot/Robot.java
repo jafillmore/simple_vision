@@ -7,11 +7,21 @@
 
 package frc.robot;
 
+import org.opencv.core.Rect;
+import org.opencv.imgproc.Imgproc;
+
+import edu.wpi.cscore.CvSource;
+import edu.wpi.cscore.UsbCamera;
+import edu.wpi.cscore.VideoMode;
+import edu.wpi.first.cameraserver.CameraServer;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.vision.VisionThread;
 import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import frc.robot.Constants.VisConstants;
 
 /**
  * The VM is configured to automatically run this class, and to call the functions corresponding to
@@ -27,6 +37,16 @@ public class Robot extends TimedRobot {
   NetworkTable table;
   double[] areas;
   double[] defaultValue = new double[0];
+  
+  UsbCamera targetCam = CameraServer.getInstance().startAutomaticCapture(0);
+
+  Object imgLock = new Object();
+  public int count = 0;
+  public int pipeCount = 0;
+  public double centerX = 0;
+  public CvSource outputStream;
+  public StripPipeline p;
+  public VisionThread v;
 
   /**
    * This function is run when the robot is first started up and should be used for any
@@ -40,6 +60,38 @@ public class Robot extends TimedRobot {
 
     table = NetworkTableInstance.getDefault().getTable("GRIP/mycontoursReport");
 
+    targetCam.setVideoMode(VideoMode.PixelFormat.kMJPEG,
+                          VisConstants.targetCameraFrameWidth,
+                          VisConstants.targetCameraFrameHeight,
+                          VisConstants.targetCameraFPS);
+  
+    outputStream = CameraServer.getInstance().putVideo("Processed in Main", VisConstants.targetCameraFrameWidth, VisConstants.targetCameraFrameHeight);
+
+    v = new VisionThread(targetCam, new StripPipeline(), stripPipeline -> {
+                            
+      p = stripPipeline; 
+      System.out.println("Vision thread is fucking working");          
+      if (stripPipeline.filterContoursOutput().isEmpty())
+        {SmartDashboard.putString("Filterd Contour Status:", "No Contours Found");
+      };
+
+      
+      if (!stripPipeline.filterContoursOutput().isEmpty()) {
+        
+
+          Rect r = Imgproc.boundingRect(stripPipeline.filterContoursOutput().get(0));
+          synchronized (imgLock) {
+              centerX = r.x + (r.width / 2);
+
+              SmartDashboard.putNumber("Center X from Subsys VisionThread", centerX);
+
+            
+          }
+          outputStream.putFrame(stripPipeline.cvAbsdiffOutput);
+      }
+      
+    });
+    v.start();
     
   }
     
@@ -58,7 +110,7 @@ public class Robot extends TimedRobot {
     // block in order for anything in the Command-based framework to work.
     CommandScheduler.getInstance().run();
     
-    double[] areas = table.getEntry("area").getDoubleArray(defaultValue);
+    /*double[] areas = table.getEntry("area").getDoubleArray(defaultValue);
 
     System.out.print("areas: " );
 
@@ -66,7 +118,15 @@ public class Robot extends TimedRobot {
       System.out.print(area + " ");
     }
 
-    System.out.println();
+    System.out.println();*/
+
+
+
+
+    
+    //SmartDashboard.putNumber("Number of Contours Found", stripPipeline.findContoursOutput().size());
+    //SmartDashboard.putNumber("Number of Contours Found", stripPipeline.filterContoursOutput().size());
+
   }
 
   /**

@@ -39,7 +39,7 @@ public final class Constants {
     }
 
     public static final class DStationConstants {
-        public static final int leftJoystickUSBPort =0;
+        public static final int leftJoystickUSBPort = 0;
         
     }
 
