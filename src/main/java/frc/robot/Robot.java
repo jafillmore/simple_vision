@@ -45,7 +45,6 @@ public class Robot extends TimedRobot {
   public int pipeCount = 0;
   public double centerX = 0;
   public CvSource outputStream;
-  public StripPipeline p;
   public VisionThread v;
 
   /**
@@ -69,8 +68,6 @@ public class Robot extends TimedRobot {
 
     v = new VisionThread(targetCam, new StripPipeline(), stripPipeline -> {
                             
-      p = stripPipeline; 
-      System.out.println("Vision thread is fucking working");          
       if (stripPipeline.filterContoursOutput().isEmpty())
         {SmartDashboard.putString("Filterd Contour Status:", "No Contours Found");
       };
